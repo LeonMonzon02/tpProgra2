@@ -1,5 +1,5 @@
 package billetera;
 
-public class CuentaRegular {
-
+public class CuentaRegular extends Cuenta {
+	private double saldo_max;
 }

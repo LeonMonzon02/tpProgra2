@@ -10,8 +10,8 @@ public class Empresa {
 	private String nombreContacto;
 	private int telefono; 
 	private List<Usuario> usuariosEmpresa;
-	private boolean estaAutorizado;
-	
+
+
 	public String getNombreEmpresa() {
 		return nombre;
 	}

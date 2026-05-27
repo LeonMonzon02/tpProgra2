@@ -1,5 +1,5 @@
 package billetera;
 
-public class CuentaPremium {
-
+public class CuentaPremium extends Cuenta {
+	private double saldo_min;
 }

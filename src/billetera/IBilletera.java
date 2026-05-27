@@ -8,6 +8,7 @@ import java.util.*;
  */
 public interface IBilletera {
 
+	
     /**
      * [Nuevo]
      * 11) Registra una nueva empresa en el sistema.
@@ -19,8 +20,15 @@ public interface IBilletera {
      * @param email          El correo electrónico de la empresa.
      * @param nombreContacto El nombre de la persona de contacto.
      */
-    void registrarEmpresa(String cuit, String nombreFantasia, String telefono, String email, String nombreContacto);
+    void registrarEmpresa(String cuit, String nombreFantasia, String telefono, String email, String nombreContacto); 
+    
+    	Empresa e = new Empresa(cuit,nombrerFantasia,telefono,email,nombreContacto);
+    	
+    	
 
+    
+    
+    
     /**
      * [Nuevo]
      * 12) Agrega una persona autorizada a operar en nombre de una empresa.

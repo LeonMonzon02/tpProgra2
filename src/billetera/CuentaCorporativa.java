@@ -1,5 +1,5 @@
 package billetera;
 
-public class CuentaCorporativa {
-
+public class CuentaCorporativa extends Cuenta {
+	private Empresa empresa;
 }
