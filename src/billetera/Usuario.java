@@ -9,4 +9,19 @@ public class Usuario {
 	private Hash contraseña;
 	private List<Cuenta> cuentas;
 	private double totalInvertido;
+	
+	public String getDni() {
+		return dni;
+	}
+	
+	public String getNombre() {
+		return nombre;
+	}
+	
+	public List <Cuenta> getCuentas(){
+		return cuentas;
+	}
+	
+	
+	
 }

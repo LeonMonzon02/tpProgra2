@@ -1,17 +1,26 @@
 package billetera;
-
+import java.time.LocalDate;
 public abstract class Actividad {
-
-	//private fecha fecha
-	private double monto;
-	private Cuenta cuentaOrigen;
+	protected double monto;
+	protected Cuenta cuentaOrigen;
+	protected Cuenta cuentaDestino;
+	protected LocalDate fecha;
 	
-	
+	public abstract String descripcionOp();
 	
 	public double getMonto() {
 		return monto;
 	}
-	public void setMonto(double monto) {
-		this.monto = monto;
+	
+	public LocalDate getFecha() {
+		return fecha;
+	}
+	
+	public Cuenta getOrigen() {
+		return cuentaOrigen;
+	}
+	
+	public Cuenta getDestino() {
+		return cuentaDestino;
 	}
 }
