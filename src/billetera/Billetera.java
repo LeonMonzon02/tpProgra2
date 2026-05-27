@@ -71,8 +71,36 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public void realizarTransferencia(String cvuOrigen, String cvuDestino, double monto) {
-		// TODO Esbozo de método generado automáticamente
-		
+		if (cvuOrigen == null) {
+			throw new RuntimeException("El CVU de origen no puede ser nulo");
+		}
+		if (cvuDestino == null) {
+			throw new RuntimeException("El CVU de destino no puede ser nulo");
+		}
+		if (cvuOrigen.equals(cvuDestino)) {
+			throw new RuntimeException("El CVU de origen y destino no pueden ser el mismo");
+		}
+		if (monto <= 0) {
+			throw new RuntimeException("El monto debe ser positivo");
+		}
+
+
+		for (Usuario usuario : usuarios.values()) {
+			for (Cuenta cuenta : usuario.getCuentas()) {
+				if (cuenta.getCvu().equals(cvuOrigen)) {
+					if (cuenta.getSaldoDispoinible() < monto) {
+						throw new RuntimeException("Saldo insuficiente en la cuenta de origen");
+					}
+					cuenta.disminuirSaldoDisponible(monto);
+					billetera.agregarActividad(new Transferencia(monto, cuenta, null)); // Cuenta destino se asignará después
+				}
+				if (cuenta.getCvu().equals(cvuDestino)) {
+					cuenta.aumentarSaldoDisponible(monto);
+					billetera.agregarActividad(new Transferencia(monto, null, cuenta)); // Cuenta origen se asignará después
+				}
+			}
+		}
+
 	}
 
 	@Override

@@ -6,24 +6,47 @@ public abstract class Inversion extends Actividad {
 	protected boolean esPrecancelable = false;
 	protected boolean estaPrecancelada = false;
 	protected int plazo;
-	protected String id;
+	protected int id;
 	
-	
-	public abstract double calcularGanancia();
-	
-	public double getMonto() {
-		return monto;
-	}
-	
-	public int getPlazo() {
-		return plazo;
-	}
-	
-	public String getId() {
-		return id;
-	}
-	
-	public LocalDate getFecha() {
-		return fecha;
-	}
+    public Inversion(int id, double monto, Cuenta cuentaOrigen, int plazo, boolean esPrecancelable) {
+        super(monto, cuentaOrigen);
+        this.id = id;
+        this.plazo = plazo;
+        this.esPrecancelable = esPrecancelable;
+        this.estaPrecancelada = false;
+    }
+
+    public abstract double calcularGanancia();
+
+    public void cancelar() {
+        if (!esPrecancelable) {
+            throw new RuntimeException("La inversión no es precancelable");
+        }
+
+        if (estaPrecancelada) {
+            throw new RuntimeException("La inversión ya fue precancelada");
+        }
+
+        this.estaPrecancelada = true;
+    }
+
+    public boolean esPrecancelable() {
+        return esPrecancelable;
+    }
+
+    public boolean estaPrecancelada() {
+        return estaPrecancelada;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getPlazo() {
+        return plazo;
+    }
+
+    public LocalDate getFechaVencimiento() {
+        return getFecha().plusDays(plazo);
+    }
 }

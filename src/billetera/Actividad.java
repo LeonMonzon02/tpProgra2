@@ -6,6 +6,13 @@ public abstract class Actividad {
 	protected Cuenta cuentaDestino;
 	protected LocalDate fecha;
 	
+    public Actividad(double monto, Cuenta cuentaOrigen) {
+        this.fecha = Utilitarios.hoy();
+        this.monto = monto;
+        this.cuentaOrigen = cuentaOrigen;
+    }
+
+
 	public abstract String descripcionOp();
 	
 	public double getMonto() {

@@ -12,7 +12,33 @@ public abstract class Cuenta {
 }
 	
 	public abstract void puedeInvertir(Inversion inversion);
+
+	public void aumentarSaldoDisponible(double monto) {
+		this.saldoDisponible += monto;
+	}
+
+	public void disminuirSaldoDisponible(double monto) {
+		this.saldoDisponible -= monto;
+	}
+
+	public void aumentarSaldoInvertido(double monto) {
+		this.saldoInvertido += monto;
+	}
+
+	public void disminuirSaldoInvertido(double monto) {
+		this.saldoInvertido -= monto;
+	}
+
+	public void agregarActividad(Actividad actividad) {
+		this.actividades.add(actividad);
+	}
+
+	public List<Actividad> getActividades() {
+		return actividades;
+	}
+
 	
+
 	public String getCvu() {
 		return cvu;
 	}
@@ -28,9 +54,39 @@ public abstract class Cuenta {
 	public double getSaldoDispoinible() {
 		return saldoDisponible;
 	}
-	
-	public List<Actividad> getActividades() {
-		return actividades;
+
+	public void setCvu(String cvu) {
+		this.cvu = cvu;
+	}
+
+
+
+	public void setAlias(String alias) {
+		this.alias = alias;
+	}
+
+
+
+	public void setSaldoInvertido(double saldoInvertido) {
+		this.saldoInvertido = saldoInvertido;
+	}
+
+
+
+	public double getSaldoDisponible() {
+		return saldoDisponible;
+	}
+
+
+
+	public void setSaldoDisponible(double saldoDisponible) {
+		this.saldoDisponible = saldoDisponible;
+	}
+
+
+
+	public void setActividades(List<Actividad> actividades) {
+		this.actividades = actividades;
 	}
 	
 	
