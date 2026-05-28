@@ -1,18 +1,61 @@
 package billetera;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.time.LocalDate;
+
 public abstract class Cuenta {
 	protected String cvu;
 	protected String alias;
+	
 	protected double saldoInvertido;
 	protected double saldoDisponible;
+	
 	protected List<Actividad> actividades;
-	
-	
-}
-	
+
+	protected LocalDate fechaCreacion;
+
+	public Cuenta(String cvu,
+              String alias,
+              double saldo,
+              LocalDate fechaCreacion) {
+
+    this.cvu = cvu;
+    this.alias = alias;
+    this.saldoDisponible = saldo;
+    this.fechaCreacion = fechaCreacion;
+
+    this.actividades = new ArrayList<>();
+} 
+
 	public abstract void puedeInvertir(Inversion inversion);
+
+	public void aumentarSaldoDisponible(double monto) {
+		this.saldoDisponible += monto;
+	}
+
+	public void disminuirSaldoDisponible(double monto) {
+		this.saldoDisponible -= monto;
+	}
+
+	public void aumentarSaldoInvertido(double monto) {
+		this.saldoInvertido += monto;
+	}
+
+	public void disminuirSaldoInvertido(double monto) {
+		this.saldoInvertido -= monto;
+	}
+
+	public void agregarActividad(Actividad actividad) {
+		this.actividades.add(actividad);
+	}
+
+	public List<Actividad> getActividades() {
+		return actividades;
+	}
+
 	
+
 	public String getCvu() {
 		return cvu;
 	}
@@ -25,12 +68,38 @@ public abstract class Cuenta {
 		return saldoInvertido;
 	}
 	
-	public double getSaldoDispoinible() {
+	public double getSaldoDisponible() {
 		return saldoDisponible;
 	}
-	
-	public List<Actividad> getActividades() {
-		return actividades;
+
+	public void setCvu(String cvu) {
+		this.cvu = cvu;
+	}
+
+
+
+	public void setAlias(String alias) {
+		this.alias = alias;
+	}
+
+
+
+	public void setSaldoInvertido(double saldoInvertido) {
+		this.saldoInvertido = saldoInvertido;
+	}
+
+
+
+
+
+	public void setSaldoDisponible(double saldoDisponible) {
+		this.saldoDisponible = saldoDisponible;
+	}
+
+
+
+	public void setActividades(List<Actividad> actividades) {
+		this.actividades = actividades;
 	}
 	
 	

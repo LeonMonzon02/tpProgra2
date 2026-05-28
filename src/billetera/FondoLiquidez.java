@@ -14,5 +14,5 @@ public class FondoLiquidez extends Inversion  {
 		// TODO Esbozo de método generado automáticamente
 		return null;
 	}
-	
+	 
 }
