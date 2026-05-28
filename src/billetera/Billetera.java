@@ -3,71 +3,192 @@ package billetera;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-
+import java.util.ArrayList;
 
 public class Billetera implements IBilletera {
-    // Tus variables de instancia (como las colecciones o mapas)
+   
 	Map<String, Usuario> usuarios;   // clave = DNI
 	Map<String, Cuenta> cuentas;     // clave = CVU
 	Map<String, Empresa> empresas;   // clave = CUIT
 	Map<String, String> aliasToCvu;  // clave = alias
 	List<String> historialGlobal;
-    // Tu constructor
 
-
-	public static void main(String[] args) {
-		// TODO Esbozo de método generado automáticamente
-
+	public Billetera() {
+	    this.usuarios = new HashMap<>();
+	    this.empresas = new HashMap<>(); 
+	    this.cuentas = new HashMap<>();
+	    this.aliasToCvu = new HashMap<>();
+	    this.historialGlobal = new ArrayList<>();
+	  
 	}
-
+	
 	@Override
 	public void registrarEmpresa(String cuit, String nombreFantasia, String telefono, String email,
 			String nombreContacto) {
-		// TODO Esbozo de método generado automáticamente
+		if (this.empresas.containsKey(cuit)) { //comprueba si la empresa está registrada usando el cuit
+			
+			throw new IllegalArgumentException("la empresa ya se encuentra registrada");
+		}
+		
+		Empresa nuevaEmpresa = new Empresa(cuit, nombreFantasia, email, telefono, nombreContacto); //registramos la empresa
+		
+		this.empresas.put(cuit, nuevaEmpresa);
 		
 	}
 
 	@Override
 	public void agregarPersonaAutorizada(String cuitEmpresa, String dniAutorizado) {
-		// TODO Esbozo de método generado automáticamente
-		
-	}
 
+	    if (!empresas.containsKey(cuitEmpresa)) {
+	        throw new IllegalArgumentException("la empresa no existe");
+	    }
+
+	    if (!usuarioExiste(dniAutorizado)) {
+	        throw new IllegalArgumentException("el usuario no existe");
+	    }
+
+	    Empresa empresa = empresas.get(cuitEmpresa);
+	    empresa.agregarAutorizado(dniAutorizado);
+	}
 	@Override
 	public void registrarUsuario(String dni, String nombre, String telefono, String email) {
-		// TODO Esbozo de método generado automáticamente
-		
+        if (usuarioExiste(dni)) { //Comprobamos si el dni está dentro del MAP
+            throw new IllegalArgumentException("El usuario ya se encuentra registrado"); //si el dni está en el MAP capturamos el error
+        }
+
+     
+        Usuario nuevoUsuario = new Usuario(dni, nombre, telefono, email); //si no existe creamos el nuevo usuario
+
+        
+        this.usuarios.put(dni, nuevoUsuario); // lo guardamos en el MAP 
+    }
+	//metodos auxiliares
+	
+	private boolean usuarioExiste(String dni) {
+	    return usuarios.containsKey(dni);
 	}
+	
+
+	
+	private Usuario buscarUsuario (String dniUsuario) {
+		Usuario usuario = usuarios.get(dniUsuario);
+	    if (usuario == null) {
+	        throw new IllegalArgumentException("El usuario no existe");
+	    }
+
+	    return usuario;
+	
+	}
+	
 
 	@Override
 	public String crearCuentaRegular(String dniUsuario, String alias) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+	
+		if (aliasToCvu.containsKey(alias)) {
+	        throw new IllegalArgumentException("El alias ya existe");
+		}
+		
+		Usuario usuario = buscarUsuario(dniUsuario);
+		
+		String cvu = Utilitarios.generarSiguienteCvu();
+	    
+		CuentaRegular nuevaCuenta =
+	            new CuentaRegular(cvu, alias, 0, Utilitarios.hoy());
+
+	    cuentas.put(cvu, nuevaCuenta);
+
+	    aliasToCvu.put(alias, cvu);
+
+	    usuario.agregarCuenta(nuevaCuenta);
+
+	    	return cvu;
 	}
 
 	@Override
 	public String crearCuentaPremium(String dniUsuario, String alias, double depositoInicial) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+		if (aliasToCvu.containsKey(alias)) {
+	        throw new IllegalArgumentException("El alias ya existe");
+		}
+		if(depositoInicial<1000000) {
+			throw new IllegalArgumentException("El deposito es insufucuente");
+			
+		}
+		Usuario usuario = buscarUsuario(dniUsuario);
+		
+		String cvu = Utilitarios.generarSiguienteCvu();
+		CuentaPremium nuevaCuenta = new CuentaPremium(cvu, alias,depositoInicial, Utilitarios.hoy());
+		
+		cuentas.put(cvu, nuevaCuenta);
+		aliasToCvu.put(alias, cvu);
+		
+		usuario.agregarCuenta(nuevaCuenta);
+		
+			return cvu;
 	}
 
 	@Override
 	public String crearCuentaCorporativa(String dniUsuario, String alias, String cuitEmpresa) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+	    if (!empresas.containsKey(cuitEmpresa)) {
+	        throw new IllegalArgumentException("la empresa no existe");
+	    }
+
+	    if (!usuarioExiste(dniUsuario)) {
+	        throw new IllegalArgumentException("el usuario no existe");
+	    }
+	    Empresa empresa = empresas.get(cuitEmpresa);
+	    
+	    if (!empresa.estaAutorizado(dniUsuario)) {
+	    	throw new IllegalArgumentException("El usuario no está autorizado");
+	    }
+	    if (aliasToCvu.containsKey(alias)) {
+	        throw new IllegalArgumentException("El alias ya existe");
+		}
+		
+		Usuario usuario = buscarUsuario(dniUsuario);
+		
+		String cvu = Utilitarios.generarSiguienteCvu();
+	    
+		CuentaCorporativa nuevaCuenta =
+	            new CuentaCorporativa(cvu, alias,0, Utilitarios.hoy(),cuitEmpresa);
+
+	    cuentas.put(cvu, nuevaCuenta);
+
+	    aliasToCvu.put(alias, cvu);
+	    usuario.agregarCuenta(nuevaCuenta);
+		return cvu;
 	}
 
 	@Override
 	public List<String> obtenerCuentas(String dniUsuario) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
-	}
 
+		    if (!usuarioExiste(dniUsuario)) {
+		        throw new IllegalArgumentException("El usuario no existe");
+		    }
+
+		    Usuario usuario = usuarios.get(dniUsuario);
+
+		    List<String> cuentasUsuario = new ArrayList<>();
+
+		    for (Cuenta cuenta : usuario.getCuentas()) {
+
+		        cuentasUsuario.add(cuenta.getCvu());
+
+		    }
+
+		    return cuentasUsuario;
+		}
+	
 	@Override
 	public double obtenerSaldoDisponible(String cvu) {
-		// TODO Esbozo de método generado automáticamente
-		return 0;
+	    if (!cuentas.containsKey(cvu)) {
+	        throw new IllegalArgumentException("La cuenta no existe");
+	    }
+
+	    Cuenta cuenta = cuentas.get(cvu);
+
+	    return cuenta.getSaldoDisponible();
 	}
+	
 
 	@Override
 	public void realizarTransferencia(String cvuOrigen, String cvuDestino, double monto) {
@@ -130,9 +251,12 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public String consultarCvu(String alias) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
-	}
+		   if (!aliasToCvu.containsKey(alias)) {
+		        throw new IllegalArgumentException("El alias no existe");
+		    }
+
+		    return aliasToCvu.get(alias);
+		}
 
 	@Override
 	public List<String> consultarHistorialGlobal() {

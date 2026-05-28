@@ -1,16 +1,33 @@
 package billetera;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.time.LocalDate;
+
 public abstract class Cuenta {
 	protected String cvu;
 	protected String alias;
+	
 	protected double saldoInvertido;
 	protected double saldoDisponible;
+	
 	protected List<Actividad> actividades;
-	
-	
-}
-	
+
+	protected LocalDate fechaCreacion;
+
+	public Cuenta(String cvu,
+              String alias,
+              double saldo,
+              LocalDate fechaCreacion) {
+
+    this.cvu = cvu;
+    this.alias = alias;
+    this.saldoDisponible = saldo;
+    this.fechaCreacion = fechaCreacion;
+
+    this.actividades = new ArrayList<>();
+} 
+
 	public abstract void puedeInvertir(Inversion inversion);
 
 	public void aumentarSaldoDisponible(double monto) {
@@ -51,7 +68,7 @@ public abstract class Cuenta {
 		return saldoInvertido;
 	}
 	
-	public double getSaldoDispoinible() {
+	public double getSaldoDisponible() {
 		return saldoDisponible;
 	}
 
@@ -73,10 +90,13 @@ public abstract class Cuenta {
 
 
 
+<<<<<<< HEAD
 	public double getSaldoDisponible() {
 		return saldoDisponible;
 	}
 
+=======
+>>>>>>> b45b9453d5a57b415a5aad15558826e815dc611e
 
 
 	public void setSaldoDisponible(double saldoDisponible) {

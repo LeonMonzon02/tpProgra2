@@ -1,21 +1,23 @@
 package billetera;
 import java.util.List;
+import java.util.ArrayList;
+
 public class Usuario {
 	private String dni;
 	private String nombre;
-	private int telefono;
+	private String telefono;
 	private String correoElectronico;
-	private Hash contraseña;
+	private String contraseña;
 	private List<Cuenta> cuentas;
 	private double totalInvertido;
 	
-	public Usuario(String dni, String nombre, int telefono, String correoElectronico, Hash contraseña) {
+	public Usuario(String dni, String nombre, String telefono, String correoElectronico, String contraseña) {
 		this.dni = dni;
 		this.nombre = nombre;
 		this.telefono = telefono;
 		this.correoElectronico = correoElectronico;
-		this.contraseña = contraseña;
 		this.totalInvertido = 0.0;
+		this.cuentas = new ArrayList<>();
 	}
 
 	public void agregarCuenta(Cuenta cuenta) {
