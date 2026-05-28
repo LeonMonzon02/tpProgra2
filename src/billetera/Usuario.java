@@ -7,11 +7,11 @@ public class Usuario {
 	private String nombre;
 	private String telefono;
 	private String correoElectronico;
-	private String contraseña;
+	//private String contraseña;
 	private List<Cuenta> cuentas;
 	private double totalInvertido;
 	
-	public Usuario(String dni, String nombre, String telefono, String correoElectronico, String contraseña) {
+	public Usuario(String dni, String nombre, String telefono, String correoElectronico) {
 		this.dni = dni;
 		this.nombre = nombre;
 		this.telefono = telefono;

@@ -7,27 +7,22 @@ import java.time.LocalDate;
 public abstract class Cuenta {
 	protected String cvu;
 	protected String alias;
-	
 	protected double saldoInvertido;
 	protected double saldoDisponible;
-	
 	protected List<Actividad> actividades;
-
 	protected LocalDate fechaCreacion;
+	protected Usuario titular;
 
-	public Cuenta(String cvu,
-              String alias,
-              double saldo,
-              LocalDate fechaCreacion) {
+	public Cuenta(String cvu, String alias, double saldo, LocalDate fechaCreacion, Usuario titular) {
 
     this.cvu = cvu;
     this.alias = alias;
     this.saldoDisponible = saldo;
+    this.saldoInvertido = 0.0;
     this.fechaCreacion = fechaCreacion;
-
+    this.titular = titular;
     this.actividades = new ArrayList<>();
-} 
-
+	}
 	public abstract void puedeInvertir(Inversion inversion);
 
 	public void aumentarSaldoDisponible(double monto) {
@@ -68,9 +63,6 @@ public abstract class Cuenta {
 		return saldoInvertido;
 	}
 	
-	public double getSaldoDisponible() {
-		return saldoDisponible;
-	}
 
 	public void setCvu(String cvu) {
 		this.cvu = cvu;
@@ -90,14 +82,13 @@ public abstract class Cuenta {
 
 
 
-<<<<<<< HEAD
 	public double getSaldoDisponible() {
 		return saldoDisponible;
 	}
 
-=======
->>>>>>> b45b9453d5a57b415a5aad15558826e815dc611e
-
+	public Usuario getTitular() {
+		return titular;
+	}
 
 	public void setSaldoDisponible(double saldoDisponible) {
 		this.saldoDisponible = saldoDisponible;

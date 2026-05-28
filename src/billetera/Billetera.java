@@ -11,15 +11,18 @@ public class Billetera implements IBilletera {
 	Map<String, Cuenta> cuentas;     // clave = CVU
 	Map<String, Empresa> empresas;   // clave = CUIT
 	Map<String, String> aliasToCvu;  // clave = alias
-	List<String> historialGlobal;
-
+	List<Actividad> historialGlobal; // clave = id inversión
+	Map<Integer, Inversion> inversiones;
+	int proximoIdInversion;
+	
 	public Billetera() {
-	    this.usuarios = new HashMap<>();
-	    this.empresas = new HashMap<>(); 
-	    this.cuentas = new HashMap<>();
-	    this.aliasToCvu = new HashMap<>();
-	    this.historialGlobal = new ArrayList<>();
-	  
+		this.usuarios = new HashMap<>();
+		this.empresas = new HashMap<>(); 
+		this.cuentas = new HashMap<>();
+		this.aliasToCvu = new HashMap<>();
+		this.inversiones = new HashMap<>();
+		this.historialGlobal = new ArrayList<>();
+		this.proximoIdInversion = 1;
 	}
 	
 	@Override
@@ -64,6 +67,10 @@ public class Billetera implements IBilletera {
     }
 	//metodos auxiliares
 	
+	private int generarIdInversion() {
+		return proximoIdInversion++;
+	}
+
 	private boolean usuarioExiste(String dni) {
 	    return usuarios.containsKey(dni);
 	}
@@ -79,7 +86,6 @@ public class Billetera implements IBilletera {
 	    return usuario;
 	
 	}
-	
 
 	@Override
 	public String crearCuentaRegular(String dniUsuario, String alias) {
@@ -226,27 +232,138 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public int realizarInversionRentaFija(String dni, String cvu, double monto, int plazoDias) {
-		// TODO Esbozo de método generado automáticamente
-		return 0;
+		if (dni.length() != 8 || dni.length() != 7)  {
+			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		}
+		if (cvu == null || cvu.isEmpty()) {
+			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+		}
+		if (monto <= 0) {
+			throw new IllegalArgumentException("El monto debe ser positivo");
+		}
+		if (plazoDias <= 0) {
+			throw new IllegalArgumentException("El plazo en días debe ser positivo");
+		}
+
+		
+		for (Usuario usuario : usuarios.values()) {
+			for (Cuenta cuenta : usuario.getCuentas() ) {
+				if (cuenta.getCvu().equals(cvu)) {
+					if (cuenta.getSaldoDisponible() < monto) {
+						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
+					}
+					cuenta.disminuirSaldoDisponible(monto);
+					RentaFija nuevaInversion = new RentaFija(monto, plazoDias);
+					cuenta.agregarActividad(nuevaInversion);
+				}
+			}
+		}
+
 	}
 
 	@Override
-	public int realizarInversionDivisa(String dni, String cvu, double monto, int plazoDias, String divisa,
-			double tasa) {
-		// TODO Esbozo de método generado automáticamente
-		return 0;
+	public int realizarInversionDivisa(String dni, String cvu, double monto, int plazoDias, String divisa, double tasa) {
+		if (dni.length() != 8 || dni.length() != 7)  {
+			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		}
+		if (cvu == null || cvu.isEmpty()) {
+			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+		}
+		if (monto <= 0) {
+			throw new IllegalArgumentException("El monto debe ser positivo");
+		}
+		if (plazoDias <= 0) {
+			throw new IllegalArgumentException("El plazo en días debe ser positivo");
+		}
+		if (divisa == null || divisa.isEmpty()) { //revisar bien lo de la divisa
+			throw new IllegalArgumentException("La divisa no puede ser nula o vacía");
+		}
+
+		if (tasa <= 0) {
+			throw new IllegalArgumentException("La tasa debe ser positiva");
+		}
+
+		for (Usuario usuario : usuarios.values()) {
+			for (Cuenta cuenta : usuario.getCuentas() ) {
+				if (cuenta.getCvu().equals(cvu)) {
+					if (cuenta.getSaldoDisponible() < monto) {
+						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
+					}
+					cuenta.disminuirSaldoDisponible(monto);
+					VinculadaDivisa nuevaInversion = new VinculadaDivisa(monto, plazoDias, divisa, tasa);
+					cuenta.agregarActividad(nuevaInversion);
+				}
+			}
+		}
+
 	}
 
 	@Override
 	public int realizarInversionLiquidez(String dni, String cvu, double monto, int plazoDias) {
-		// TODO Esbozo de método generado automáticamente
-		return 0;
+		if (dni.length() != 8 || dni.length() != 7)  {
+			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		}
+		if (cvu == null || cvu.isEmpty()) {
+			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+		}
+		if (monto <= 0) {
+			throw new IllegalArgumentException("El monto debe ser positivo");
+		}
+		if (plazoDias <= 0) {
+			throw new IllegalArgumentException("El plazo en días debe ser positivo");
+		}
+
+		for (Usuario usuario : usuarios.values()) {
+			for (Cuenta cuenta : usuario.getCuentas() ) {
+				if (cuenta.getCvu().equals(cvu)) {
+					if (cuenta.getSaldoDisponible() < monto) {
+						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
+					}
+					cuenta.disminuirSaldoDisponible(monto);
+					FondoLiquidez nuevaInversion = new FondoLiquidez(monto, plazoDias);
+					cuenta.agregarActividad(nuevaInversion);
+				}
+			}
+		}
+
+
+
 	}
 
 	@Override
 	public void precancelarInversion(String dni, String cvu, int idInversion) {
-		// TODO Esbozo de método generado automáticamente
-		
+		if (dni.length() != 8 || dni.length() != 7)  {
+			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		}
+		if (cvu == null || cvu.isEmpty()) {
+			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+		}
+		if (idInversion <= 0) {
+			throw new IllegalArgumentException("El ID de inversión debe ser positivo");
+		}
+
+
+
+		for (Usuario usuario : usuarios.values()) {
+			for (Cuenta cuenta : usuario.getCuentas()) {
+				if (cuenta.getCvu().equals(cvu)) {
+					for (Actividad actividades : cuenta.getActividades().values()) {
+						if (si el id de la actividad es igual al idInversion) {
+							if (si es rentafija.es precancelable true) {
+								Rentafija.cancelar();
+							}
+							if (si es vinculadadivisa) {
+								VinculadaDivisa.cancelar();
+							}
+							if (si es fondoliquidez) {
+								throw new IllegalArgumentException("Las inversiones de fondo de liquidez no son precancelables");
+							}
+
+						}
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -260,8 +377,10 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public List<String> consultarHistorialGlobal() {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+		for (String actividad : historialGlobal) {
+
+		}
+		return historialGlobal;
 	}
 
 	@Override
@@ -280,12 +399,6 @@ public class Billetera implements IBilletera {
 	public double obtenerTotalInvertido(String dniUsuario) {
 		// TODO Esbozo de método generado automáticamente
 		return 0;
-	}
-
-	@Override
-	public List<String> cuentasConMayorVolumen(int cantidadTop) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
 	}
 
 }

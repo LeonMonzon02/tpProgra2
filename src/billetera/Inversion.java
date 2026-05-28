@@ -16,8 +16,11 @@ public abstract class Inversion extends Actividad {
         this.estaPrecancelada = false;
     }
 
+
     public abstract double calcularGanancia();
 
+
+    
     public void cancelar() {
         if (!esPrecancelable) {
             throw new RuntimeException("La inversión no es precancelable");
