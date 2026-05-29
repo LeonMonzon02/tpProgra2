@@ -89,81 +89,114 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public String crearCuentaRegular(String dniUsuario, String alias) {
-	
-		if (aliasToCvu.containsKey(alias)) {
-	        throw new IllegalArgumentException("El alias ya existe");
+		if (dniUsuario == null || dniUsuario.isEmpty()) {
+			throw new RuntimeException("El DNI no puede ser nulo o vacío");
 		}
-		
-		Usuario usuario = buscarUsuario(dniUsuario);
-		
+
+		if (alias == null || alias.isEmpty()) {
+			throw new RuntimeException("El alias no puede ser nulo o vacío");
+		}
+
+		Usuario usuario = usuarios.get(dniUsuario);
+
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
+		}
+
+		if (aliasToCvu.containsKey(alias)) {
+			throw new RuntimeException("El alias ya está registrado");
+		}
+
 		String cvu = Utilitarios.generarSiguienteCvu();
-	    
-		CuentaRegular nuevaCuenta =
-	            new CuentaRegular(cvu, alias, 0, Utilitarios.hoy());
 
-	    cuentas.put(cvu, nuevaCuenta);
+		CuentaRegular cuenta = new CuentaRegular(cvu,alias,0.0,Utilitarios.hoy(),usuario);
 
-	    aliasToCvu.put(alias, cvu);
+		cuentas.put(cvu, cuenta);
+		aliasToCvu.put(alias, cvu);
+		usuario.agregarCuenta(cuenta);
 
-	    usuario.agregarCuenta(nuevaCuenta);
-
-	    	return cvu;
+		return cvu;
 	}
 
 	@Override
 	public String crearCuentaPremium(String dniUsuario, String alias, double depositoInicial) {
+		if (dniUsuario == null || dniUsuario.isEmpty()) {
+			throw new RuntimeException("El DNI no puede ser nulo o vacío");
+		}
+
+		if (alias == null || alias.isEmpty()) {
+			throw new RuntimeException("El alias no puede ser nulo o vacío");
+		}
+
+		if (depositoInicial <= 0) {
+			throw new RuntimeException("El depósito inicial debe ser positivo");
+		}
+
+		Usuario usuario = usuarios.get(dniUsuario);
+
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
+		}
+
 		if (aliasToCvu.containsKey(alias)) {
-	        throw new IllegalArgumentException("El alias ya existe");
+			throw new RuntimeException("El alias ya está registrado");
 		}
-		if(depositoInicial<1000000) {
-			throw new IllegalArgumentException("El deposito es insufucuente");
-			
-		}
-		Usuario usuario = buscarUsuario(dniUsuario);
-		
+
 		String cvu = Utilitarios.generarSiguienteCvu();
-		CuentaPremium nuevaCuenta = new CuentaPremium(cvu, alias,depositoInicial, Utilitarios.hoy());
-		
-		cuentas.put(cvu, nuevaCuenta);
+
+		CuentaPremium cuenta = new CuentaPremium(cvu,alias,depositoInicial,Utilitarios.hoy(),usuario);
+
+		cuentas.put(cvu, cuenta);
 		aliasToCvu.put(alias, cvu);
-		
-		usuario.agregarCuenta(nuevaCuenta);
-		
-			return cvu;
-	}
+		usuario.agregarCuenta(cuenta);
 
-	@Override
-	public String crearCuentaCorporativa(String dniUsuario, String alias, String cuitEmpresa) {
-	    if (!empresas.containsKey(cuitEmpresa)) {
-	        throw new IllegalArgumentException("la empresa no existe");
-	    }
-
-	    if (!usuarioExiste(dniUsuario)) {
-	        throw new IllegalArgumentException("el usuario no existe");
-	    }
-	    Empresa empresa = empresas.get(cuitEmpresa);
-	    
-	    if (!empresa.estaAutorizado(dniUsuario)) {
-	    	throw new IllegalArgumentException("El usuario no está autorizado");
-	    }
-	    if (aliasToCvu.containsKey(alias)) {
-	        throw new IllegalArgumentException("El alias ya existe");
-		}
-		
-		Usuario usuario = buscarUsuario(dniUsuario);
-		
-		String cvu = Utilitarios.generarSiguienteCvu();
-	    
-		CuentaCorporativa nuevaCuenta =
-	            new CuentaCorporativa(cvu, alias,0, Utilitarios.hoy(),cuitEmpresa);
-
-	    cuentas.put(cvu, nuevaCuenta);
-
-	    aliasToCvu.put(alias, cvu);
-	    usuario.agregarCuenta(nuevaCuenta);
 		return cvu;
-	}
+}
 
+@Override
+public String crearCuentaCorporativa(String dniUsuario, String alias, String cuitEmpresa) {
+    if (dniUsuario == null || dniUsuario.isEmpty()) {
+        throw new RuntimeException("El DNI no puede ser nulo o vacío");
+    }
+
+    if (alias == null || alias.isEmpty()) {
+        throw new RuntimeException("El alias no puede ser nulo o vacío");
+    }
+
+    if (cuitEmpresa == null || cuitEmpresa.isEmpty()) {
+        throw new RuntimeException("El CUIT no puede ser nulo o vacío");
+    }
+
+    Usuario usuario = usuarios.get(dniUsuario);
+
+    if (usuario == null) {
+        throw new RuntimeException("El usuario no existe");
+    }
+
+    Empresa empresa = empresas.get(cuitEmpresa);
+
+    if (empresa == null) {
+        throw new RuntimeException("La empresa no existe");
+    }
+
+    if (!empresa.estaAutorizado(dniUsuario)) {
+        throw new RuntimeException("El usuario no está autorizado para operar en nombre de la empresa");
+    }
+
+    if (aliasToCvu.containsKey(alias)) {
+        throw new RuntimeException("El alias ya está registrado");
+    }
+
+    String cvu = Utilitarios.generarSiguienteCvu();
+
+    CuentaCorporativa cuenta = new CuentaCorporativa(cvu,alias,0.0,Utilitarios.hoy(),usuario,empresa,cuitEmpresa);
+
+    cuentas.put(cvu, cuenta);
+    aliasToCvu.put(alias, cvu);
+    usuario.agregarCuenta(cuenta);
+
+    return cvu;
+}
 	@Override
 	public List<String> obtenerCuentas(String dniUsuario) {
 
@@ -212,22 +245,32 @@ public class Billetera implements IBilletera {
 		}
 
 
-		for (Usuario usuario : usuarios.values()) {
-			for (Cuenta cuenta : usuario.getCuentas()) {
-				if (cuenta.getCvu().equals(cvuOrigen)) {
-					if (cuenta.getSaldoDispoinible() < monto) {
-						throw new RuntimeException("Saldo insuficiente en la cuenta de origen");
-					}
-					cuenta.disminuirSaldoDisponible(monto);
-					billetera.agregarActividad(new Transferencia(monto, cuenta, null)); // Cuenta destino se asignará después
-				}
-				if (cuenta.getCvu().equals(cvuDestino)) {
-					cuenta.aumentarSaldoDisponible(monto);
-					billetera.agregarActividad(new Transferencia(monto, null, cuenta)); // Cuenta origen se asignará después
-				}
-			}
+		Cuenta cuentaOrigen = cuentas.get(cvuOrigen);
+		Cuenta cuentaDestino = cuentas.get(cvuDestino); //busco en el map con la clave que le paso
+
+		if (cuentaOrigen == null) {
+			throw new RuntimeException("La cuenta de origen no existe");
+		}
+		if (cuentaDestino == null) {
+			throw new RuntimeException("La cuenta de destino no existe");
 		}
 
+    	Transferencia transferencia; //se la paso antes sino rompe por el boolean de dsp
+
+		if (cuentaOrigen.getSaldoDisponible() >= monto) {
+			cuentaOrigen.disminuirSaldoDisponible(monto);
+			cuentaDestino.aumentarSaldoDisponible(monto);
+
+	        transferencia = new Transferencia(monto, cuentaOrigen, cuentaDestino, true);
+		}	
+
+		else {
+        transferencia = new Transferencia(monto, cuentaOrigen, cuentaDestino, false);
+		}
+
+		historialGlobal.add(transferencia);
+		cuentaOrigen.agregarActividad(transferencia);
+		cuentaDestino.agregarActividad(transferencia);
 	}
 
 	@Override
@@ -263,38 +306,59 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public int realizarInversionDivisa(String dni, String cvu, double monto, int plazoDias, String divisa, double tasa) {
-		if (dni.length() != 8 || dni.length() != 7)  {
-			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		if (dni == null || !(dni.length() == 7 || dni.length() == 8)) {
+			throw new RuntimeException("El DNI debe tener 7 u 8 dígitos");
 		}
 		if (cvu == null || cvu.isEmpty()) {
-			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+			throw new RuntimeException("El CVU no puede ser nulo o vacío");
 		}
 		if (monto <= 0) {
-			throw new IllegalArgumentException("El monto debe ser positivo");
+			throw new RuntimeException("El monto debe ser positivo");
 		}
 		if (plazoDias <= 0) {
-			throw new IllegalArgumentException("El plazo en días debe ser positivo");
+			throw new RuntimeException("El plazo en días debe ser positivo");
 		}
 		if (divisa == null || divisa.isEmpty()) { //revisar bien lo de la divisa
-			throw new IllegalArgumentException("La divisa no puede ser nula o vacía");
+			throw new RuntimeException("La divisa no puede ser nula o vacía");
 		}
 
 		if (tasa <= 0) {
-			throw new IllegalArgumentException("La tasa debe ser positiva");
+			throw new RuntimeException("La tasa debe ser positiva");
 		}
 
-		for (Usuario usuario : usuarios.values()) {
-			for (Cuenta cuenta : usuario.getCuentas() ) {
-				if (cuenta.getCvu().equals(cvu)) {
-					if (cuenta.getSaldoDisponible() < monto) {
-						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
-					}
-					cuenta.disminuirSaldoDisponible(monto);
-					VinculadaDivisa nuevaInversion = new VinculadaDivisa(monto, plazoDias, divisa, tasa);
-					cuenta.agregarActividad(nuevaInversion);
-				}
-			}
+		Usuario usuario = usuarios.get(dni);
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
 		}
+
+
+		Cuenta cuenta = cuentas.get(cvu);
+		if (cuenta == null) {
+			throw new RuntimeException("La cuenta no existe");
+		}
+
+		if (!cuenta.getTitular().getDni().equals(dni)) {//CHEQUEO QUE LA CUENTA SEA DE EL USUARIO
+			throw new RuntimeException("El CVU no pertenece al usuario");
+		}
+
+		if (cuenta.getSaldoDisponible() < monto) {
+			throw new RuntimeException("Saldo insuficiente en la cuenta");
+		}
+
+		int id = generarIdInversion();
+		VinculadaDivisa nuevaInversion = new VinculadaDivisa(id, monto, cuenta, plazoDias, divisa, tasa);		cuenta.disminuirSaldoDisponible(monto);
+		cuenta.aumentarSaldoInvertido(monto);
+
+
+		cuenta.agregarActividad(nuevaInversion);
+		historialGlobal.add(nuevaInversion);
+		inversiones.put(id, nuevaInversion);
+
+		usuario.aumentarTotalInvertido(monto);
+
+		return id;
+
+
 
 	}
 
@@ -332,73 +396,139 @@ public class Billetera implements IBilletera {
 
 	@Override
 	public void precancelarInversion(String dni, String cvu, int idInversion) {
-		if (dni.length() != 8 || dni.length() != 7)  {
-			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
+		if (dni == null || !(dni.length() == 7 || dni.length() == 8)) {
+			throw new RuntimeException("El DNI debe tener 7 u 8 dígitos");
 		}
+
 		if (cvu == null || cvu.isEmpty()) {
-			throw new IllegalArgumentException("El CVU no puede ser nulo o vacío");
+			throw new RuntimeException("El CVU no puede ser nulo o vacío");
 		}
+
 		if (idInversion <= 0) {
-			throw new IllegalArgumentException("El ID de inversión debe ser positivo");
+			throw new RuntimeException("El ID de inversión debe ser positivo");
 		}
 
+		Usuario usuario = usuarios.get(dni);
 
-
-		for (Usuario usuario : usuarios.values()) {
-			for (Cuenta cuenta : usuario.getCuentas()) {
-				if (cuenta.getCvu().equals(cvu)) {
-					for (Actividad actividades : cuenta.getActividades().values()) {
-						if (si el id de la actividad es igual al idInversion) {
-							if (si es rentafija.es precancelable true) {
-								Rentafija.cancelar();
-							}
-							if (si es vinculadadivisa) {
-								VinculadaDivisa.cancelar();
-							}
-							if (si es fondoliquidez) {
-								throw new IllegalArgumentException("Las inversiones de fondo de liquidez no son precancelables");
-							}
-
-						}
-					}
-				}
-			}
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
 		}
+
+		Cuenta cuenta = cuentas.get(cvu);
+
+		if (cuenta == null) {
+			throw new RuntimeException("La cuenta no existe");
+		}
+
+		if (!cuenta.getTitular().getDni().equals(dni)) {
+			throw new RuntimeException("El CVU no pertenece al usuario");
+		}
+
+		Inversion inversion = inversiones.get(idInversion);
+
+		if (inversion == null) {
+			throw new RuntimeException("La inversión no existe");
+		}
+
+		if (!inversion.getCuentaOrigen().getCvu().equals(cvu)) {
+			throw new RuntimeException("La inversión no pertenece a esa cuenta");
+		}
+
+		if (inversion.estaPrecancelada()) {
+			throw new RuntimeException("La inversión ya fue precancelada");
+		}
+
+		inversion.cancelar();
+
+		cuenta.disminuirSaldoInvertido(inversion.getMonto());
+		cuenta.aumentarSaldoDisponible(inversion.getMonto());
+		//ver para hacer que devuelta la mitad del monto
+		usuario.disminuirTotalInvertido(inversion.getMonto());
 	}
+
+
 
 	@Override
 	public String consultarCvu(String alias) {
-		   if (!aliasToCvu.containsKey(alias)) {
-		        throw new IllegalArgumentException("El alias no existe");
-		    }
+		if (alias == null || alias.isEmpty()) {
+			throw new RuntimeException("El alias no puede ser nulo o vacío");
+		}
 
-		    return aliasToCvu.get(alias);
+		if (!aliasToCvu.containsKey(alias)) {
+			throw new IllegalArgumentException("El alias no existe");
+		}
+
+		return aliasToCvu.get(alias);
 		}
 
 	@Override
 	public List<String> consultarHistorialGlobal() {
-		for (String actividad : historialGlobal) {
+		List<String> resultado = new ArrayList<>();
 
+		for (Actividad actividad : historialGlobal) {
+			resultado.add(actividad.descripcionOp());
 		}
-		return historialGlobal;
+
+		return resultado;
 	}
 
 	@Override
 	public List<String> consultarHistorialCuenta(String cvu) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+		if (cvu == null || cvu.isEmpty()) {
+			throw new RuntimeException("El CVU no puede ser nulo o vacío");
+		}
+
+		Cuenta cuenta = cuentas.get(cvu);
+
+		if (cuenta == null) {
+			throw new RuntimeException("La cuenta no existe");
+		}
+
+		List<String> resultado = new ArrayList<>();
+
+		for (Actividad actividad : cuenta.getActividades()) {
+			resultado.add(actividad.descripcionOp());
+		}
+
+		return resultado;
 	}
 
 	@Override
 	public List<String> consultarHistorialUsuario(String dniUsuario) {
-		// TODO Esbozo de método generado automáticamente
-		return null;
+		if (dniUsuario == null || dniUsuario.isEmpty()) {
+			throw new RuntimeException("El DNI no puede ser nulo o vacío");
+		}
+
+		Usuario usuario = usuarios.get(dniUsuario);
+
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
+		}
+
+		List<String> resultado = new ArrayList<>();
+
+		for (Cuenta cuenta : usuario.getCuentas()) {
+			for (Actividad actividad : cuenta.getActividades()) {
+				resultado.add(actividad.descripcionOp());
+			}
+		}
+
+		return resultado;
 	}
 
 	@Override
 	public double obtenerTotalInvertido(String dniUsuario) {
-		// TODO Esbozo de método generado automáticamente
-		return 0;
+		if (dniUsuario == null || dniUsuario.isEmpty()) {
+			throw new RuntimeException("El DNI no puede ser nulo o vacío");
+		}
+
+		Usuario usuario = usuarios.get(dniUsuario);
+
+		if (usuario == null) {
+			throw new RuntimeException("El usuario no existe");
+		}
+
+		return usuario.getTotalInvertido();
 	}
 
 }

@@ -1,35 +1,34 @@
 package billetera;
 import java.time.LocalDate;
 public abstract class Actividad {
+	protected LocalDate fecha;
 	protected double monto;
 	protected Cuenta cuentaOrigen;
-	protected Cuenta cuentaDestino;
-	protected LocalDate fecha;
-	protected String descripcion;
+	protected boolean aprobada;
 	
 
-    public Actividad(LocalDate fecha,double monto,String descripcion) {
-		
-    	this.fecha = fecha;
-    	this.monto = monto;
-    	this.descripcion = descripcion;
-}
+	public Actividad(double monto, Cuenta cuentaOrigen, boolean aprobada) {
+		this.fecha = Utilitarios.hoy();
+		this.monto = monto;
+		this.cuentaOrigen = cuentaOrigen;
+		this.aprobada = aprobada;
+	}
 
 	public abstract String descripcionOp();
 	
-	public double getMonto() {
-		return monto;
-	}
-	
-	public LocalDate getFecha() {
-		return fecha;
-	}
-	
-	public Cuenta getOrigen() {
-		return cuentaOrigen;
-	}
-	
-	public Cuenta getDestino() {
-		return cuentaDestino;
-	}
+    public double getMonto() {
+        return monto;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public Cuenta getCuentaOrigen() {
+        return cuentaOrigen;
+    }
+
+    public boolean estaAprobada() {
+        return aprobada;
+    }
 }

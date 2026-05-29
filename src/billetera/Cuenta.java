@@ -26,18 +26,40 @@ public abstract class Cuenta {
 	public abstract void puedeInvertir(Inversion inversion);
 
 	public void aumentarSaldoDisponible(double monto) {
+		if (monto <= 0) {
+			throw new RuntimeException("El monto debe ser positivo");
+		}
+
 		this.saldoDisponible += monto;
 	}
 
 	public void disminuirSaldoDisponible(double monto) {
+		if (monto <= 0) {
+			throw new RuntimeException("El monto debe ser positivo");
+		}
+
+		if (monto > this.saldoDisponible) {
+			throw new RuntimeException("Saldo disponible insuficiente");
+		}
+
 		this.saldoDisponible -= monto;
 	}
-
 	public void aumentarSaldoInvertido(double monto) {
+		if (monto <= 0) {
+			throw new RuntimeException("El monto debe ser positivo");
+		}
+
 		this.saldoInvertido += monto;
 	}
 
 	public void disminuirSaldoInvertido(double monto) {
+		if (monto <= 0) {
+			throw new RuntimeException("El monto debe ser positivo");
+		}
+
+		if (monto > this.saldoInvertido) {
+        throw new RuntimeException("Saldo invertido insuficiente");}
+
 		this.saldoInvertido -= monto;
 	}
 

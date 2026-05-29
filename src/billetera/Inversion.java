@@ -9,7 +9,7 @@ public abstract class Inversion extends Actividad {
 	protected int id;
 	
     public Inversion(int id, double monto, Cuenta cuentaOrigen, int plazo, boolean esPrecancelable) {
-        super(LocalDate.now(), monto, "");
+        super(monto, cuentaOrigen, true);
         this.id = id;
         this.plazo = plazo;
         this.esPrecancelable = esPrecancelable;
