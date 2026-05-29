@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Billetera implements IBilletera {
    
@@ -42,17 +44,22 @@ public class Billetera implements IBilletera {
 	@Override
 	public void agregarPersonaAutorizada(String cuitEmpresa, String dniAutorizado) {
 
-	    if (!empresas.containsKey(cuitEmpresa)) {
-	        throw new IllegalArgumentException("la empresa no existe");
+	    if (cuitEmpresa == null || cuitEmpresa.isEmpty()) {
+	        throw new IllegalArgumentException("El CUIT no puede ser nulo o vacío");
 	    }
 
-	    if (!usuarioExiste(dniAutorizado)) {
-	        throw new IllegalArgumentException("el usuario no existe");
+	    if (dniAutorizado == null || dniAutorizado.isEmpty()) {
+	        throw new IllegalArgumentException("El DNI autorizado no puede ser nulo o vacío");
+	    }
+
+	    if (!empresas.containsKey(cuitEmpresa)) {
+	        throw new IllegalArgumentException("la empresa no existe");
 	    }
 
 	    Empresa empresa = empresas.get(cuitEmpresa);
 	    empresa.agregarAutorizado(dniAutorizado);
 	}
+
 	@Override
 	public void registrarUsuario(String dni, String nombre, String telefono, String email) {
         if (usuarioExiste(dni)) { //Comprobamos si el dni está dentro del MAP
@@ -65,8 +72,7 @@ public class Billetera implements IBilletera {
         
         this.usuarios.put(dni, nuevoUsuario); // lo guardamos en el MAP 
     }
-	//metodos auxiliares
-	
+
 	private int generarIdInversion() {
 		return proximoIdInversion++;
 	}
@@ -74,8 +80,6 @@ public class Billetera implements IBilletera {
 	private boolean usuarioExiste(String dni) {
 	    return usuarios.containsKey(dni);
 	}
-	
-
 	
 	private Usuario buscarUsuario (String dniUsuario) {
 		Usuario usuario = usuarios.get(dniUsuario);
@@ -85,6 +89,11 @@ public class Billetera implements IBilletera {
 
 	    return usuario;
 	
+	}
+
+	private String formatoCuenta(Cuenta cuenta) {
+		String tipo = cuenta.getClass().getSimpleName().replace("Cuenta", "");
+		return tipo + ": " + cuenta.getAlias() + " (" + cuenta.getCvu() + ")";
 	}
 
 	@Override
@@ -210,7 +219,7 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 
 		    for (Cuenta cuenta : usuario.getCuentas()) {
 
-		        cuentasUsuario.add(cuenta.getCvu());
+		        cuentasUsuario.add(formatoCuenta(cuenta));
 
 		    }
 
@@ -275,7 +284,7 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 
 	@Override
 	public int realizarInversionRentaFija(String dni, String cvu, double monto, int plazoDias) {
-		if (dni.length() != 8 || dni.length() != 7)  {
+		if (dni == null || !(dni.length() == 7 || dni.length() == 8))  {
 			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
 		}
 		if (cvu == null || cvu.isEmpty()) {
@@ -288,20 +297,40 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 			throw new IllegalArgumentException("El plazo en días debe ser positivo");
 		}
 
-		
-		for (Usuario usuario : usuarios.values()) {
-			for (Cuenta cuenta : usuario.getCuentas() ) {
-				if (cuenta.getCvu().equals(cvu)) {
-					if (cuenta.getSaldoDisponible() < monto) {
-						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
-					}
-					cuenta.disminuirSaldoDisponible(monto);
-					RentaFija nuevaInversion = new RentaFija(monto, plazoDias);
-					cuenta.agregarActividad(nuevaInversion);
-				}
-			}
+		Usuario usuario = usuarios.get(dni);
+
+		if (usuario == null) {
+			throw new IllegalArgumentException("El usuario no existe");
 		}
 
+		Cuenta cuenta = cuentas.get(cvu);
+
+		if (cuenta == null) {
+			throw new IllegalArgumentException("La cuenta no existe");
+		}
+
+		if (!cuenta.getTitular().getDni().equals(dni)) {
+			throw new IllegalArgumentException("El CVU no pertenece al usuario");
+		}
+
+		if (cuenta.getSaldoDisponible() < monto) {
+			throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
+		}
+
+		int id = generarIdInversion();
+
+		RentaFija nuevaInversion = new RentaFija(id, monto, cuenta, plazoDias);
+
+		cuenta.disminuirSaldoDisponible(monto);
+		cuenta.aumentarSaldoInvertido(monto);
+
+		cuenta.agregarActividad(nuevaInversion);
+		historialGlobal.add(nuevaInversion);
+		inversiones.put(id, nuevaInversion);
+
+		usuario.aumentarTotalInvertido(monto);
+
+		return id;
 	}
 
 	@Override
@@ -346,9 +375,10 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 		}
 
 		int id = generarIdInversion();
-		VinculadaDivisa nuevaInversion = new VinculadaDivisa(id, monto, cuenta, plazoDias, divisa, tasa);		cuenta.disminuirSaldoDisponible(monto);
-		cuenta.aumentarSaldoInvertido(monto);
+		VinculadaDivisa nuevaInversion = new VinculadaDivisa(id, monto, cuenta, plazoDias, divisa, tasa);
 
+		cuenta.disminuirSaldoDisponible(monto);
+		cuenta.aumentarSaldoInvertido(monto);
 
 		cuenta.agregarActividad(nuevaInversion);
 		historialGlobal.add(nuevaInversion);
@@ -364,7 +394,7 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 
 	@Override
 	public int realizarInversionLiquidez(String dni, String cvu, double monto, int plazoDias) {
-		if (dni.length() != 8 || dni.length() != 7)  {
+		if (dni == null || !(dni.length() == 7 || dni.length() == 8))  {
 			throw new IllegalArgumentException("El DNI debe tener 7 u 8 dígitos");
 		}
 		if (cvu == null || cvu.isEmpty()) {
@@ -377,18 +407,44 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 			throw new IllegalArgumentException("El plazo en días debe ser positivo");
 		}
 
-		for (Usuario usuario : usuarios.values()) {
-			for (Cuenta cuenta : usuario.getCuentas() ) {
-				if (cuenta.getCvu().equals(cvu)) {
-					if (cuenta.getSaldoDisponible() < monto) {
-						throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
-					}
-					cuenta.disminuirSaldoDisponible(monto);
-					FondoLiquidez nuevaInversion = new FondoLiquidez(monto, plazoDias);
-					cuenta.agregarActividad(nuevaInversion);
-				}
-			}
+		Usuario usuario = usuarios.get(dni);
+
+		if (usuario == null) {
+			throw new IllegalArgumentException("El usuario no existe");
 		}
+
+		Cuenta cuenta = cuentas.get(cvu);
+
+		if (cuenta == null) {
+			throw new IllegalArgumentException("La cuenta no existe");
+		}
+
+		if (!cuenta.getTitular().getDni().equals(dni)) {
+			throw new IllegalArgumentException("El CVU no pertenece al usuario");
+		}
+
+		if (!(cuenta instanceof CuentaCorporativa)) {
+			throw new IllegalArgumentException("El fondo de liquidez solo puede realizarse desde cuentas corporativas");
+		}
+
+		if (cuenta.getSaldoDisponible() < monto) {
+			throw new IllegalArgumentException("Saldo insuficiente en la cuenta");
+		}
+
+		int id = generarIdInversion();
+
+		FondoLiquidez nuevaInversion = new FondoLiquidez(id, monto, cuenta, plazoDias);
+
+		cuenta.disminuirSaldoDisponible(monto);
+		cuenta.aumentarSaldoInvertido(monto);
+
+		cuenta.agregarActividad(nuevaInversion);
+		historialGlobal.add(nuevaInversion);
+		inversiones.put(id, nuevaInversion);
+
+		usuario.aumentarTotalInvertido(monto);
+
+		return id;
 
 
 
@@ -506,10 +562,14 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 		}
 
 		List<String> resultado = new ArrayList<>();
+		Set<Actividad> actividadesAgregadas = new HashSet<>();
 
 		for (Cuenta cuenta : usuario.getCuentas()) {
 			for (Actividad actividad : cuenta.getActividades()) {
-				resultado.add(actividad.descripcionOp());
+				if (!actividadesAgregadas.contains(actividad)) {
+					resultado.add(actividad.descripcionOp());
+					actividadesAgregadas.add(actividad);
+				}
 			}
 		}
 
@@ -529,6 +589,25 @@ public String crearCuentaCorporativa(String dniUsuario, String alias, String cui
 		}
 
 		return usuario.getTotalInvertido();
+	}
+
+	@Override
+	public List<String> cuentasConMayorVolumen(int cantidadTop) {
+		if (cantidadTop <= 0) {
+			throw new RuntimeException("La cantidad debe ser positiva");
+		}
+
+		List<Cuenta> todasLasCuentas = new ArrayList<>(cuentas.values());
+
+		todasLasCuentas.sort((c1, c2) -> Integer.compare(c2.getActividades().size(), c1.getActividades().size()));
+
+		List<String> resultado = new ArrayList<>();
+
+		for (int i = 0; i < cantidadTop && i < todasLasCuentas.size(); i++) {
+			resultado.add(formatoCuenta(todasLasCuentas.get(i)));
+		}
+
+		return resultado;
 	}
 
 }

@@ -20,7 +20,9 @@ public class VinculadaDivisa extends Inversion {
         this.tasa = tasa;
     }
 
-    public String getDivisa() {
+
+
+	public String getDivisa() {
         return divisa;
     }
 

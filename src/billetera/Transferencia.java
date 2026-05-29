@@ -40,7 +40,12 @@ public class Transferencia extends Actividad {
 		return sb.toString();
     }
 
-    public Cuenta getCuentaDestino() {
+    public Cuenta getCuentaOrigen() {
+		return cuentaOrigen;
+	}
+
+
+	public Cuenta getCuentaDestino() {
         return cuentaDestino;
     }
 }
